@@ -19,16 +19,16 @@ export class MemStorage implements IStorage {
     const initialItems = [
       // Grilling & Fire Setup
       { text: "🔥 Charcoal (enough for Smokey Joe)" },
-      { text: "🔥 Lighter fluid OR chimney starter" },
+      { text: "🔥 Chimney starter" },
       { text: "🔥 Newspaper (fire starter)" },
       { text: "🔥 Matches or lighter" },
       { text: "🔥 Grill tools: tongs, spatula" },
-      { text: "🔥 Heat-resistant gloves or oven mitt" },
       { text: "🔥 Foil (wrap corn, line grill, cover leftovers)" },
-      { text: "🔥 Grill brush (for cleanup)" },
+      { text: "🔥 Grill brush" },
       
       // Food & Prep
-      { text: "🍴 Hot dogs & buns" },
+      { text: "🍴 Hot dogs" },
+      { text: "🍴 Buns" },
       { text: "🍴 Sweet corn" },
       { text: "🍴 Potato salad" },
       { text: "🍴 Cucumber salad" },
