@@ -1,6 +1,6 @@
 import { type ChecklistItem, type InsertChecklistItem, type UpdateChecklistItem, type InsertClaim, type Claim, checklistItems, claims } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   getAllChecklistItems(): Promise<(ChecklistItem & { claims: Claim[] })[]>;
@@ -111,7 +111,7 @@ export class DatabaseStorage implements IStorage {
     const [claimToRemove] = await db
       .select()
       .from(claims)
-      .where(eq(claims.itemId, itemId) && eq(claims.claimedBy, claimedBy))
+      .where(and(eq(claims.itemId, itemId), eq(claims.claimedBy, claimedBy)))
       .orderBy(desc(claims.claimedAt))
       .limit(1);
     
