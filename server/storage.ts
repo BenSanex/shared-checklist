@@ -107,9 +107,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async removeClaim(itemId: string, claimedBy: string): Promise<void> {
-    await db
-      .delete(claims)
-      .where(eq(claims.itemId, itemId) && eq(claims.claimedBy, claimedBy));
+    // Find the most recent claim by this user for this item
+    const [claimToRemove] = await db
+      .select()
+      .from(claims)
+      .where(eq(claims.itemId, itemId) && eq(claims.claimedBy, claimedBy))
+      .orderBy(desc(claims.claimedAt))
+      .limit(1);
+    
+    if (claimToRemove) {
+      await db
+        .delete(claims)
+        .where(eq(claims.id, claimToRemove.id));
+    }
   }
 }
 
