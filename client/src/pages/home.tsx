@@ -50,8 +50,7 @@ export default function Home() {
   const handleAddNewItem = async () => {
     if (newItemText.trim()) {
       await addItem({
-        text: newItemText.trim(),
-        category: "custom"
+        text: newItemText.trim()
       });
       setNewItemText("");
     }
@@ -63,9 +62,9 @@ export default function Home() {
     }
   };
 
-  const grillingItems = items.filter(item => item.category === "grilling");
-  const foodItems = items.filter(item => item.category === "food");
-  const customItems = items.filter(item => item.category === "custom");
+  const grillingItems = items.filter(item => item.text.startsWith("🔥"));
+  const foodItems = items.filter(item => item.text.startsWith("🍴"));
+  const customItems = items.filter(item => !item.text.startsWith("🔥") && !item.text.startsWith("🍴"));
 
   const completedCount = items.filter(item => item.isCompleted).length;
   const totalCount = items.length;

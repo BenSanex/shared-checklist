@@ -99,7 +99,7 @@ export function ChecklistItemComponent({
         variant="ghost"
         size="sm"
         onClick={handleToggleClaim}
-        disabled={isClaiming || isUpdating || (item.claimedBy && item.claimedBy !== currentUser)}
+        disabled={isClaiming || isUpdating || Boolean(item.claimedBy && item.claimedBy !== currentUser)}
         className={cn("p-2", getClaimButtonVariant())}
         data-testid={`button-claim-${item.id}`}
       >

@@ -18,40 +18,40 @@ export class MemStorage implements IStorage {
   private seedInitialData() {
     const initialItems = [
       // Grilling & Fire Setup
-      { text: "Charcoal (enough for Smokey Joe)", category: "grilling" },
-      { text: "Lighter fluid OR chimney starter", category: "grilling" },
-      { text: "Newspaper (fire starter)", category: "grilling" },
-      { text: "Matches or lighter", category: "grilling" },
-      { text: "Grill tools: tongs, spatula", category: "grilling" },
-      { text: "Heat-resistant gloves or oven mitt", category: "grilling" },
-      { text: "Foil (wrap corn, line grill, cover leftovers)", category: "grilling" },
-      { text: "Grill brush (for cleanup)", category: "grilling" },
+      { text: "🔥 Charcoal (enough for Smokey Joe)" },
+      { text: "🔥 Lighter fluid OR chimney starter" },
+      { text: "🔥 Newspaper (fire starter)" },
+      { text: "🔥 Matches or lighter" },
+      { text: "🔥 Grill tools: tongs, spatula" },
+      { text: "🔥 Heat-resistant gloves or oven mitt" },
+      { text: "🔥 Foil (wrap corn, line grill, cover leftovers)" },
+      { text: "🔥 Grill brush (for cleanup)" },
       
       // Food & Prep
-      { text: "Hot dogs & buns", category: "food" },
-      { text: "Sweet corn", category: "food" },
-      { text: "Potato salad", category: "food" },
-      { text: "Cucumber salad", category: "food" },
-      { text: "Watermelon", category: "food" },
-      { text: "Condiments: ketchup, mustard, relish, mayo", category: "food" },
-      { text: "Seasonings: salt, pepper, butter (for corn)", category: "food" },
-      { text: "Extra snacks", category: "food" },
-      { text: "Soda", category: "food" },
-      { text: "Water", category: "food" },
-      { text: "Cooler with ice/ice packs", category: "food" },
-      { text: "Plates", category: "food" },
-      { text: "Napkins/paper towels", category: "food" },
-      { text: "Cutlery (forks, knives, spoons)", category: "food" },
-      { text: "Serving spoons/tongs for salads", category: "food" },
-      { text: "Cutting board + knife", category: "food" },
-      { text: "Picnic blanket or tablecloth", category: "food" },
-      { text: "Folding chairs (if needed)", category: "food" },
-      { text: "Bug spray", category: "food" },
-      { text: "Sunscreen", category: "food" },
-      { text: "Trash bags", category: "food" },
-      { text: "Wet wipes/hand sanitizer", category: "food" },
-      { text: "Ziplocks or containers for leftovers", category: "food" },
-      { text: "Frisbee/ball/cards/games", category: "food" },
+      { text: "🍴 Hot dogs & buns" },
+      { text: "🍴 Sweet corn" },
+      { text: "🍴 Potato salad" },
+      { text: "🍴 Cucumber salad" },
+      { text: "🍴 Watermelon" },
+      { text: "🍴 Condiments: ketchup, mustard, relish, mayo" },
+      { text: "🍴 Seasonings: salt, pepper, butter (for corn)" },
+      { text: "🍴 Extra snacks" },
+      { text: "🍴 Soda" },
+      { text: "🍴 Water" },
+      { text: "🍴 Cooler with ice/ice packs" },
+      { text: "🍴 Plates" },
+      { text: "🍴 Napkins/paper towels" },
+      { text: "🍴 Cutlery (forks, knives, spoons)" },
+      { text: "🍴 Serving spoons/tongs for salads" },
+      { text: "🍴 Cutting board + knife" },
+      { text: "🍴 Picnic blanket or tablecloth" },
+      { text: "🍴 Folding chairs (if needed)" },
+      { text: "🍴 Bug spray" },
+      { text: "🍴 Sunscreen" },
+      { text: "🍴 Trash bags" },
+      { text: "🍴 Wet wipes/hand sanitizer" },
+      { text: "🍴 Ziplocks or containers for leftovers" },
+      { text: "🍴 Frisbee/ball/cards/games" },
     ];
 
     initialItems.forEach(item => {
@@ -59,20 +59,18 @@ export class MemStorage implements IStorage {
       const checklistItem: ChecklistItem = {
         id,
         text: item.text,
-        category: item.category,
         isCompleted: false,
         completedBy: null,
         completedAt: null,
         claimedBy: null,
         claimedAt: null,
-        createdAt: new Date(),
       };
       this.items.set(id, checklistItem);
     });
   }
 
   async getAllChecklistItems(): Promise<ChecklistItem[]> {
-    return Array.from(this.items.values()).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return Array.from(this.items.values());
   }
 
   async createChecklistItem(insertItem: InsertChecklistItem): Promise<ChecklistItem> {
@@ -85,7 +83,6 @@ export class MemStorage implements IStorage {
       completedAt: null,
       claimedBy: null,
       claimedAt: null,
-      createdAt: new Date(),
     };
     this.items.set(id, item);
     return item;

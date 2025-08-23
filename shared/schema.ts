@@ -6,18 +6,15 @@ import { z } from "zod";
 export const checklistItems = pgTable("checklist_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   text: text("text").notNull(),
-  category: text("category").notNull().default("custom"),
   isCompleted: boolean("is_completed").notNull().default(false),
   completedBy: text("completed_by"),
   completedAt: timestamp("completed_at"),
   claimedBy: text("claimed_by"),
   claimedAt: timestamp("claimed_at"),
-  createdAt: timestamp("created_at").notNull().default(sql`now()`),
 });
 
 export const insertChecklistItemSchema = createInsertSchema(checklistItems).pick({
   text: true,
-  category: true,
 });
 
 export const updateChecklistItemSchema = createInsertSchema(checklistItems).pick({
