@@ -1,12 +1,14 @@
-import { ChecklistItem } from "@shared/schema";
+import { ChecklistItem, Claim } from "@shared/schema";
 import { ChecklistItemComponent } from "./checklist-item";
+
+type ChecklistItemWithClaims = ChecklistItem & { claims: Claim[] };
 
 interface ChecklistSectionProps {
   title: string;
-  items: ChecklistItem[];
+  items: ChecklistItemWithClaims[];
   currentUser: string;
   onToggleComplete: (id: string, completed: boolean) => void;
-  onToggleClaim: (id: string, claimed: boolean) => void;
+  onToggleClaim: (id: string, userHasClaim: boolean) => void;
   isUpdating: boolean;
 }
 

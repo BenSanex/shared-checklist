@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChecklistItem, InsertChecklistItem } from "@shared/schema";
+import { ChecklistItem, InsertChecklistItem, Claim } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+
+type ChecklistItemWithClaims = ChecklistItem & { claims: Claim[] };
 
 export function useChecklist() {
   const queryClient = useQueryClient();
 
-  const { data: items = [], isLoading } = useQuery<ChecklistItem[]>({
+  const { data: items = [], isLoading } = useQuery<ChecklistItemWithClaims[]>({
     queryKey: ["/api/checklist-items"],
     refetchInterval: 2000, // Poll every 2 seconds for real-time updates
   });
@@ -23,6 +25,26 @@ export function useChecklist() {
   const updateItemMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       const response = await apiRequest("PATCH", `/api/checklist-items/${id}`, updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/checklist-items"] });
+    },
+  });
+
+  const addClaimMutation = useMutation({
+    mutationFn: async ({ id, claimedBy }: { id: string; claimedBy: string }) => {
+      const response = await apiRequest("POST", `/api/checklist-items/${id}/claims`, { claimedBy });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/checklist-items"] });
+    },
+  });
+
+  const removeClaimMutation = useMutation({
+    mutationFn: async ({ id, claimedBy }: { id: string; claimedBy: string }) => {
+      const response = await apiRequest("DELETE", `/api/checklist-items/${id}/claims/${claimedBy}`);
       return response.json();
     },
     onSuccess: () => {
@@ -50,18 +72,16 @@ export function useChecklist() {
     return updateItemMutation.mutateAsync({ id, updates });
   };
 
-  const toggleClaim = async (id: string, claimed: boolean) => {
-    const updates = claimed
-      ? {
-          claimedBy: localStorage.getItem("currentUser") || "Unknown",
-          claimedAt: new Date().toISOString()
-        }
-      : {
-          claimedBy: null,
-          claimedAt: null
-        };
-
-    return updateItemMutation.mutateAsync({ id, updates });
+  const toggleClaim = async (id: string, userHasClaim: boolean) => {
+    const currentUser = localStorage.getItem("currentUser") || "Unknown";
+    
+    if (userHasClaim) {
+      // Remove the user's claim
+      return removeClaimMutation.mutateAsync({ id, claimedBy: currentUser });
+    } else {
+      // Add a new claim
+      return addClaimMutation.mutateAsync({ id, claimedBy: currentUser });
+    }
   };
 
   return {
@@ -71,6 +91,6 @@ export function useChecklist() {
     toggleComplete,
     toggleClaim,
     isAddingItem: addItemMutation.isPending,
-    isUpdating: updateItemMutation.isPending,
+    isUpdating: updateItemMutation.isPending || addClaimMutation.isPending || removeClaimMutation.isPending,
   };
 }

@@ -1,11 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertChecklistItemSchema, updateChecklistItemSchema } from "@shared/schema";
+import { insertChecklistItemSchema, updateChecklistItemSchema, insertClaimSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get all checklist items
+  // Initialize database on startup
+  await storage.initializeData();
+
+  // Get all checklist items with claims
   app.get("/api/checklist-items", async (req, res) => {
     try {
       const items = await storage.getAllChecklistItems();
@@ -30,7 +33,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update checklist item (for claims and completions)
+  // Update checklist item (for completions only)
   app.patch("/api/checklist-items/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -48,6 +51,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to update checklist item" });
       }
+    }
+  });
+
+  // Add a claim to an item
+  app.post("/api/checklist-items/:id/claims", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { claimedBy } = req.body;
+      
+      const validatedData = insertClaimSchema.parse({
+        itemId: id,
+        claimedBy
+      });
+      
+      const claim = await storage.addClaim(validatedData);
+      res.json(claim);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid request data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to add claim" });
+      }
+    }
+  });
+
+  // Remove a claim from an item
+  app.delete("/api/checklist-items/:id/claims/:claimedBy", async (req, res) => {
+    try {
+      const { id, claimedBy } = req.params;
+      await storage.removeClaim(id, claimedBy);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove claim" });
     }
   });
 

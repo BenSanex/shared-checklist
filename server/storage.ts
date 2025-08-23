@@ -1,34 +1,38 @@
-import { type ChecklistItem, type InsertChecklistItem, type UpdateChecklistItem } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { type ChecklistItem, type InsertChecklistItem, type UpdateChecklistItem, type InsertClaim, type Claim, checklistItems, claims } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getAllChecklistItems(): Promise<ChecklistItem[]>;
+  getAllChecklistItems(): Promise<(ChecklistItem & { claims: Claim[] })[]>;
   createChecklistItem(item: InsertChecklistItem): Promise<ChecklistItem>;
   updateChecklistItem(id: string, updates: UpdateChecklistItem): Promise<ChecklistItem | undefined>;
+  addClaim(claim: InsertClaim): Promise<Claim>;
+  removeClaim(itemId: string, claimedBy: string): Promise<void>;
+  initializeData(): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private items: Map<string, ChecklistItem>;
+export class DatabaseStorage implements IStorage {
+  async initializeData(): Promise<void> {
+    // Check if we already have data
+    const existingItems = await db.select().from(checklistItems).limit(1);
+    if (existingItems.length > 0) {
+      return; // Data already exists
+    }
 
-  constructor() {
-    this.items = new Map();
-    this.seedInitialData();
-  }
-
-  private seedInitialData() {
+    // Seed initial data
     const initialItems = [
       // Grilling & Fire Setup
       { text: "🔥 Charcoal (enough for Smokey Joe)" },
-      { text: "🔥 Chimney starter" },
+      { text: "🔥 Lighter fluid OR chimney starter" },
       { text: "🔥 Newspaper (fire starter)" },
       { text: "🔥 Matches or lighter" },
       { text: "🔥 Grill tools: tongs, spatula" },
+      { text: "🔥 Heat-resistant gloves or oven mitt" },
       { text: "🔥 Foil (wrap corn, line grill, cover leftovers)" },
-      { text: "🔥 Grill brush" },
+      { text: "🔥 Grill brush (for cleanup)" },
       
       // Food & Prep
-      { text: "🍴 Hot dogs" },
-      { text: "🍴 Buns" },
+      { text: "🍴 Hot dogs & buns" },
       { text: "🍴 Sweet corn" },
       { text: "🍴 Potato salad" },
       { text: "🍴 Cucumber salad" },
@@ -54,61 +58,59 @@ export class MemStorage implements IStorage {
       { text: "🍴 Frisbee/ball/cards/games" },
     ];
 
-    initialItems.forEach(item => {
-      const id = randomUUID();
-      const checklistItem: ChecklistItem = {
-        id,
-        text: item.text,
-        isCompleted: false,
-        completedBy: null,
-        completedAt: null,
-        claimedBy: null,
-        claimedAt: null,
-      };
-      this.items.set(id, checklistItem);
-    });
+    await db.insert(checklistItems).values(initialItems);
   }
 
-  async getAllChecklistItems(): Promise<ChecklistItem[]> {
-    return Array.from(this.items.values());
+  async getAllChecklistItems(): Promise<(ChecklistItem & { claims: Claim[] })[]> {
+    const itemsWithClaims = await db.query.checklistItems.findMany({
+      with: {
+        claims: {
+          orderBy: desc(claims.claimedAt),
+        },
+      },
+      orderBy: checklistItems.createdAt,
+    });
+
+    return itemsWithClaims;
   }
 
   async createChecklistItem(insertItem: InsertChecklistItem): Promise<ChecklistItem> {
-    const id = randomUUID();
-    const item: ChecklistItem = {
-      id,
-      ...insertItem,
-      isCompleted: false,
-      completedBy: null,
-      completedAt: null,
-      claimedBy: null,
-      claimedAt: null,
-    };
-    this.items.set(id, item);
+    const [item] = await db
+      .insert(checklistItems)
+      .values(insertItem)
+      .returning();
     return item;
   }
 
   async updateChecklistItem(id: string, updates: UpdateChecklistItem): Promise<ChecklistItem | undefined> {
-    const item = this.items.get(id);
-    if (!item) return undefined;
-
     // Convert string dates to Date objects
     const processedUpdates: any = { ...updates };
     if (processedUpdates.completedAt && typeof processedUpdates.completedAt === 'string') {
       processedUpdates.completedAt = new Date(processedUpdates.completedAt);
     }
-    if (processedUpdates.claimedAt && typeof processedUpdates.claimedAt === 'string') {
-      processedUpdates.claimedAt = new Date(processedUpdates.claimedAt);
-    }
 
-    const updatedItem: ChecklistItem = {
-      ...item,
-      ...processedUpdates,
-    };
+    const [item] = await db
+      .update(checklistItems)
+      .set(processedUpdates)
+      .where(eq(checklistItems.id, id))
+      .returning();
     
-    this.items.set(id, updatedItem);
-    return updatedItem;
+    return item || undefined;
+  }
+
+  async addClaim(claim: InsertClaim): Promise<Claim> {
+    const [newClaim] = await db
+      .insert(claims)
+      .values(claim)
+      .returning();
+    return newClaim;
+  }
+
+  async removeClaim(itemId: string, claimedBy: string): Promise<void> {
+    await db
+      .delete(claims)
+      .where(eq(claims.itemId, itemId) && eq(claims.claimedBy, claimedBy));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

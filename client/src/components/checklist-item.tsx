@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { ChecklistItem } from "@shared/schema";
+import { ChecklistItem, Claim } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Hand } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type ChecklistItemWithClaims = ChecklistItem & { claims: Claim[] };
+
 interface ChecklistItemProps {
-  item: ChecklistItem;
+  item: ChecklistItemWithClaims;
   currentUser: string;
   onToggleComplete: (id: string, completed: boolean) => void;
-  onToggleClaim: (id: string, claimed: boolean) => void;
+  onToggleClaim: (id: string, userHasClaim: boolean) => void;
   isUpdating: boolean;
 }
 
@@ -41,8 +43,8 @@ export function ChecklistItemComponent({
     }
 
     setIsClaiming(true);
-    const shouldClaim = !item.claimedBy || item.claimedBy !== currentUser;
-    await onToggleClaim(item.id, shouldClaim);
+    const userHasClaim = item.claims.some(claim => claim.claimedBy === currentUser);
+    await onToggleClaim(item.id, userHasClaim);
     setIsClaiming(false);
   };
 
@@ -50,21 +52,22 @@ export function ChecklistItemComponent({
     if (item.isCompleted && item.completedBy) {
       return `✅ Completed by ${item.completedBy}`;
     }
-    if (item.claimedBy) {
-      return `🙋 Claimed by ${item.claimedBy}`;
+    if (item.claims.length > 0) {
+      const claimedByUsers = item.claims.map(claim => claim.claimedBy);
+      return `🙋 Claimed by ${claimedByUsers.join(", ")}`;
     }
     return "";
   };
 
   const getClaimButtonVariant = () => {
-    if (item.claimedBy === currentUser) {
+    const userHasClaim = item.claims.some(claim => claim.claimedBy === currentUser);
+    if (userHasClaim) {
       return "text-warning hover:text-warning/80";
     }
-    if (item.claimedBy) {
-      return "text-gray-400";
-    }
-    return "text-warning hover:text-warning/80";
+    return "text-gray-400 hover:text-warning/80";
   };
+
+  const userHasClaim = item.claims.some(claim => claim.claimedBy === currentUser);
 
   return (
     <div 
@@ -99,11 +102,11 @@ export function ChecklistItemComponent({
         variant="ghost"
         size="sm"
         onClick={handleToggleClaim}
-        disabled={isClaiming || isUpdating || Boolean(item.claimedBy && item.claimedBy !== currentUser)}
+        disabled={isClaiming || isUpdating}
         className={cn("p-2", getClaimButtonVariant())}
         data-testid={`button-claim-${item.id}`}
       >
-        <Hand className="h-4 w-4" />
+        <Hand className={cn("h-4 w-4", userHasClaim && "fill-current")} />
       </Button>
     </div>
   );
