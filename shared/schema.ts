@@ -17,15 +17,12 @@ export const insertChecklistItemSchema = createInsertSchema(checklistItems).pick
   text: true,
 });
 
-export const updateChecklistItemSchema = createInsertSchema(checklistItems).pick({
-  isCompleted: true,
-  completedBy: true,
-  completedAt: true,
-  claimedBy: true,
-  claimedAt: true,
-}).partial().extend({
-  completedAt: z.string().datetime().optional().nullable(),
-  claimedAt: z.string().datetime().optional().nullable(),
+export const updateChecklistItemSchema = z.object({
+  isCompleted: z.boolean().optional(),
+  completedBy: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
+  claimedBy: z.string().nullable().optional(),
+  claimedAt: z.string().nullable().optional(),
 });
 
 export type InsertChecklistItem = z.infer<typeof insertChecklistItemSchema>;
