@@ -23,7 +23,10 @@ export const updateChecklistItemSchema = createInsertSchema(checklistItems).pick
   completedAt: true,
   claimedBy: true,
   claimedAt: true,
-}).partial();
+}).partial().extend({
+  completedAt: z.string().datetime().optional().nullable(),
+  claimedAt: z.string().datetime().optional().nullable(),
+});
 
 export type InsertChecklistItem = z.infer<typeof insertChecklistItemSchema>;
 export type UpdateChecklistItem = z.infer<typeof updateChecklistItemSchema>;

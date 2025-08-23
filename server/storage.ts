@@ -92,9 +92,18 @@ export class MemStorage implements IStorage {
     const item = this.items.get(id);
     if (!item) return undefined;
 
+    // Convert string dates to Date objects
+    const processedUpdates: any = { ...updates };
+    if (processedUpdates.completedAt && typeof processedUpdates.completedAt === 'string') {
+      processedUpdates.completedAt = new Date(processedUpdates.completedAt);
+    }
+    if (processedUpdates.claimedAt && typeof processedUpdates.claimedAt === 'string') {
+      processedUpdates.claimedAt = new Date(processedUpdates.claimedAt);
+    }
+
     const updatedItem: ChecklistItem = {
       ...item,
-      ...updates,
+      ...processedUpdates,
     };
     
     this.items.set(id, updatedItem);

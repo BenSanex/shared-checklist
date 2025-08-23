@@ -39,7 +39,7 @@ export function useChecklist() {
       ? { 
           isCompleted: true, 
           completedBy: localStorage.getItem("currentUser") || "Unknown",
-          completedAt: new Date()
+          completedAt: new Date().toISOString()
         }
       : { 
           isCompleted: false, 
@@ -54,7 +54,7 @@ export function useChecklist() {
     const updates = claimed
       ? {
           claimedBy: localStorage.getItem("currentUser") || "Unknown",
-          claimedAt: new Date()
+          claimedAt: new Date().toISOString()
         }
       : {
           claimedBy: null,
