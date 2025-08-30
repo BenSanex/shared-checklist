@@ -1,6 +1,7 @@
 import { type ChecklistItem, type InsertChecklistItem, type UpdateChecklistItem, type InsertClaim, type Claim, checklistItems, claims } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
+import { readFile } from "node:fs/promises";
 
 export interface IStorage {
   getAllChecklistItems(): Promise<(ChecklistItem & { claims: Claim[] })[]>;
@@ -19,46 +20,25 @@ export class DatabaseStorage implements IStorage {
       return; // Data already exists
     }
 
-    // Seed initial data
-    const initialItems = [
-      // Grilling & Fire Setup
-      { text: "🔥 Charcoal (enough for Smokey Joe)" },
-      { text: "🔥 Lighter fluid OR chimney starter" },
-      { text: "🔥 Newspaper (fire starter)" },
-      { text: "🔥 Matches or lighter" },
-      { text: "🔥 Grill tools: tongs, spatula" },
-      { text: "🔥 Heat-resistant gloves or oven mitt" },
-      { text: "🔥 Foil (wrap corn, line grill, cover leftovers)" },
-      { text: "🔥 Grill brush (for cleanup)" },
-      
-      // Food & Prep
-      { text: "🍴 Hot dogs & buns" },
-      { text: "🍴 Sweet corn" },
-      { text: "🍴 Potato salad" },
-      { text: "🍴 Cucumber salad" },
-      { text: "🍴 Watermelon" },
-      { text: "🍴 Condiments: ketchup, mustard, relish, mayo" },
-      { text: "🍴 Seasonings: salt, pepper, butter (for corn)" },
-      { text: "🍴 Extra snacks" },
-      { text: "🍴 Soda" },
-      { text: "🍴 Water" },
-      { text: "🍴 Cooler with ice/ice packs" },
-      { text: "🍴 Plates" },
-      { text: "🍴 Napkins/paper towels" },
-      { text: "🍴 Cutlery (forks, knives, spoons)" },
-      { text: "🍴 Serving spoons/tongs for salads" },
-      { text: "🍴 Cutting board + knife" },
-      { text: "🍴 Picnic blanket or tablecloth" },
-      { text: "🍴 Folding chairs (if needed)" },
-      { text: "🍴 Bug spray" },
-      { text: "🍴 Sunscreen" },
-      { text: "🍴 Trash bags" },
-      { text: "🍴 Wet wipes/hand sanitizer" },
-      { text: "🍴 Ziplocks or containers for leftovers" },
-      { text: "🍴 Frisbee/ball/cards/games" },
-    ];
+    // Determine which seed file to load
+    const seedName = process.env.CHECKLIST_SEED ?? "picnic";
+    const seedUrl = new URL(`./seed/${seedName}.txt`, import.meta.url);
 
-    await db.insert(checklistItems).values(initialItems);
+    try {
+      const file = await readFile(seedUrl, { encoding: "utf-8" });
+      const initialItems = file
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"))
+        .map((text) => ({ text }));
+
+      if (initialItems.length > 0) {
+        await db.insert(checklistItems).values(initialItems);
+      }
+    } catch (err) {
+      console.error(`Failed to load seed file: ${seedUrl.pathname}`);
+      console.error(err);
+    }
   }
 
   async getAllChecklistItems(): Promise<(ChecklistItem & { claims: Claim[] })[]> {
